@@ -40,7 +40,11 @@ class _HomeConductorState extends State<HomeConductor> {
           Icon(Icons.home, size: 30, color: Colors.white),
           Icon(Icons.alt_route, size: 30, color: Colors.white),
           Icon(Icons.receipt_long, size: 30, color: Colors.white),
-          Icon(Icons.account_balance_wallet_outlined, size: 30, color: Colors.white),
+          Icon(
+            Icons.account_balance_wallet_outlined,
+            size: 30,
+            color: Colors.white,
+          ),
         ],
         onTap: (index) {
           setState(() {
@@ -141,6 +145,7 @@ class _HomeConductorState extends State<HomeConductor> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Expanded(
+                    flex: 2,
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
@@ -156,89 +161,96 @@ class _HomeConductorState extends State<HomeConductor> {
                           'Antes de aceptar pedidos, te sugerimos revisar tu moto.',
                           style: TextStyle(fontSize: 13, color: Colors.black87),
                         ),
-                        const SizedBox(height: 16),
-                        Row(
-                          children: [
-                            Container(
-                              padding: const EdgeInsets.all(4),
-                              decoration: BoxDecoration(
-                                color: const Color(0xFFE0E0E0),
-                                borderRadius: BorderRadius.circular(30),
-                              ),
-                              child: Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  AnimatedContainer(
-                                    duration: const Duration(milliseconds: 250),
-                                    padding: const EdgeInsets.symmetric(
-                                      horizontal: 12,
-                                      vertical: 6,
-                                    ),
-                                    decoration: BoxDecoration(
-                                      color:
-                                          _conectado
-                                              ? Colors.white
-                                              : Colors.grey[700],
-                                      borderRadius: BorderRadius.circular(30),
-                                    ),
-                                    child: Text(
-                                      'DESCONECTADO',
-                                      style: TextStyle(
-                                        fontSize: 11,
-                                        color:
-                                            _conectado
-                                                ? Colors.black54
-                                                : Colors.white,
+                        const SizedBox(height: 10),
+                        FittedBox(
+                          fit: BoxFit.scaleDown,
+                          alignment: Alignment.centerLeft,
+                          child: Row(
+                            children: [
+                              Container(
+                                padding: const EdgeInsets.all(4),
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFFE0E0E0),
+                                  borderRadius: BorderRadius.circular(30),
+                                ),
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    AnimatedContainer(
+                                      duration: const Duration(milliseconds: 250),
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 12,
+                                        vertical: 6,
                                       ),
-                                    ),
-                                  ),
-                                  const SizedBox(width: 4),
-                                  AnimatedContainer(
-                                    duration: const Duration(milliseconds: 250),
-                                    padding: const EdgeInsets.symmetric(
-                                      horizontal: 12,
-                                      vertical: 6,
-                                    ),
-                                    decoration: BoxDecoration(
-                                      color:
-                                          _conectado ? naranja : Colors.white,
-                                      borderRadius: BorderRadius.circular(30),
-                                    ),
-                                    child: Text(
-                                      'CONECTADO',
-                                      style: TextStyle(
-                                        fontSize: 11,
+                                      decoration: BoxDecoration(
                                         color:
                                             _conectado
                                                 ? Colors.white
-                                                : Colors.black54,
+                                                : Colors.grey[700],
+                                        borderRadius: BorderRadius.circular(30),
+                                      ),
+                                      child: Text(
+                                        'Desconectado',
+                                        style: TextStyle(
+                                          fontSize: 11,
+                                          color:
+                                              _conectado
+                                                  ? Colors.black54
+                                                  : Colors.white,
+                                        ),
                                       ),
                                     ),
-                                  ),
-                                ],
+                                    const SizedBox(width: 4),
+                                    AnimatedContainer(
+                                      duration: const Duration(milliseconds: 250),
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 12,
+                                        vertical: 6,
+                                      ),
+                                      decoration: BoxDecoration(
+                                        color:
+                                            _conectado ? naranja : Colors.white,
+                                        borderRadius: BorderRadius.circular(30),
+                                      ),
+                                      child: Text(
+                                        'Conectado',
+                                        style: TextStyle(
+                                          fontSize: 11,
+                                          color:
+                                              _conectado
+                                                  ? Colors.white
+                                                  : Colors.black54,
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
                               ),
-                            ),
-                            const SizedBox(width: 8),
-                            Switch(
-                              value: _conectado,
-                              activeColor: naranja,
-                              onChanged: (value) {
-                                setState(() {
-                                  _conectado = value;
-                                });
-                              },
-                            ),
-                          ],
+                              const SizedBox(width: 7),
+                              Switch(
+                                value: _conectado,
+                                activeColor: naranja,
+                                onChanged: (value) {
+                                  setState(() {
+                                    _conectado = value;
+                                  });
+                                },
+                              ),
+                            ],
+                          ),
                         ),
                       ],
                     ),
                   ),
                   const SizedBox(width: 12),
-                  SizedBox(
-                    height: 120,
-                    child: Image.asset(
-                      'assets/imagenHome_Conductor.png',
-                      fit: BoxFit.contain,
+                  Expanded(
+                    flex: 1,
+                    child: SizedBox(
+                      height: 120,
+                      child: Image.asset(
+                        'assets/imagenHome_Conductor.png',
+                        fit: BoxFit.contain,
+                      ),
                     ),
                   ),
                 ],
