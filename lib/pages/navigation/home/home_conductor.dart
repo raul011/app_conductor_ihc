@@ -1,11 +1,16 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:curved_navigation_bar/curved_navigation_bar.dart';
 import 'package:app_conductor/pages/navigation/pedidos/pedidos_page.dart';
+import 'package:web_socket_channel/web_socket_channel.dart';
 
 // Importación de los cards de la carpeta widgets
 import 'package:app_conductor/pages/navigation/ruta/widgets/card_aceptar.dart';
 import 'package:app_conductor/pages/navigation/ruta/widgets/card_entregar.dart';
 import 'package:app_conductor/pages/navigation/ruta/widgets/card_recoger.dart';
+import 'package:app_conductor/services/servicio_estado.dart';
+import 'package:app_conductor/pages/navigation/ruta/conductor_socket.dart';
+import 'package:app_conductor/pages/navigation/ruta/ruta_activa_page.dart';
 
 enum RutaStage {
   buscando, // 1er diseño (aceptar/cancelar pedido)
@@ -25,6 +30,18 @@ class _HomeConductorState extends State<HomeConductor> {
   bool _conectado = false;
   RutaStage _rutaStage = RutaStage.buscando; // Estado inicial
   static const Color naranja = Color(0xFFFF7A00);
+  Map<String, dynamic>? _pedidoActivo; // Pedido actualmente aceptado
+
+  WebSocketChannel? _channel;
+  StreamSubscription? _socketSubscription;
+
+  // Método para aceptar un pedido y cambiar a la vista de ruta
+  void aceptarPedido(Map<String, dynamic> pedidoData) {
+    setState(() {
+      _pedidoActivo = pedidoData;
+      _currentIndex = 1; // Cambiar al tab de Ruta
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -55,6 +72,13 @@ class _HomeConductorState extends State<HomeConductor> {
     );
   }
 
+  @override
+  void dispose() {
+    _socketSubscription?.cancel();
+    _channel?.sink.close();
+    super.dispose();
+  }
+
   // Decide qué pantalla mostrar según el ítem del bottom bar
   Widget _buildBody() {
     switch (_currentIndex) {
@@ -62,6 +86,7 @@ class _HomeConductorState extends State<HomeConductor> {
         return _buildInicioTab();
       case 1:
         return _buildRutaTab();
+      //return ConductorSocketPage();
       case 2:
         return const PedidosPage();
       case 3:
@@ -73,6 +98,12 @@ class _HomeConductorState extends State<HomeConductor> {
 
   // Pantalla de Ruta: Según el estado del viaje
   Widget _buildRutaTab() {
+    // Si hay un pedido activo, mostrar la vista de ruta activa
+    if (_pedidoActivo != null) {
+      return RutaActivaPage(pedidoData: _pedidoActivo!);
+    }
+
+    // Si no hay pedido activo, mostrar el flujo normal
     switch (_rutaStage) {
       case RutaStage.buscando:
         return CardAceptar(
@@ -177,7 +208,9 @@ class _HomeConductorState extends State<HomeConductor> {
                                   mainAxisSize: MainAxisSize.min,
                                   children: [
                                     AnimatedContainer(
-                                      duration: const Duration(milliseconds: 250),
+                                      duration: const Duration(
+                                        milliseconds: 250,
+                                      ),
                                       padding: const EdgeInsets.symmetric(
                                         horizontal: 12,
                                         vertical: 6,
@@ -202,7 +235,9 @@ class _HomeConductorState extends State<HomeConductor> {
                                     ),
                                     const SizedBox(width: 4),
                                     AnimatedContainer(
-                                      duration: const Duration(milliseconds: 250),
+                                      duration: const Duration(
+                                        milliseconds: 250,
+                                      ),
                                       padding: const EdgeInsets.symmetric(
                                         horizontal: 12,
                                         vertical: 6,
@@ -230,10 +265,74 @@ class _HomeConductorState extends State<HomeConductor> {
                               Switch(
                                 value: _conectado,
                                 activeColor: naranja,
-                                onChanged: (value) {
+                                onChanged: (value) async {
                                   setState(() {
                                     _conectado = value;
                                   });
+
+                                  if (value) {
+                                    // AQUÍ es donde debes llamar a tu endpoint cuando se conecta.
+                                    print(
+                                      'El conductor está conectado. Llamando al endpoint...',
+                                    );
+                                    // Conectar al WebSocket
+                                    _channel = WebSocketChannel.connect(
+                                      Uri.parse(
+                                        'wss://backend-bot-ihc-1.onrender.com/ws/conductor/3',
+                                      ),
+                                    );
+
+                                    // Escuchar mensajes
+                                    _socketSubscription = _channel!.stream.listen(
+                                      (message) {
+                                        print('Mensaje recibido: $message');
+                                        if (mounted) {
+                                          // Cuando llega un mensaje, muestra un modal flotante
+                                          showModalBottomSheet(
+                                            context: context,
+                                            isScrollControlled: true,
+                                            backgroundColor: Colors.transparent,
+                                            barrierColor: Colors.black.withOpacity(0.3),
+                                            builder: (context) =>
+                                                ConductorSocketPage(
+                                                  message: message,
+                                                  onAccept: (pedidoData) {
+                                                    // Callback cuando se acepta el pedido
+                                                    aceptarPedido(pedidoData);
+                                                  },
+                                                ),
+                                          );
+                                        }
+                                      },
+                                      onError: (error) {
+                                        print('Error en WebSocket: $error');
+                                      },
+                                      onDone: () {
+                                        print('WebSocket cerrado');
+                                      },
+                                    );
+                                    // Ejemplo: conectar conductor con id 3
+                                    await actualizarEstadoConductor(
+                                      3,
+                                      "CONECTADO",
+                                    );
+                                    // Ejemplo: miServicioAPI.actualizarEstado('conectado');
+                                  } else {
+                                    // AQUÍ es donde debes llamar a tu endpoint cuando se DESCONECTA.
+                                    print(
+                                      'El conductor se ha desconectado. Llamando al endpoint...',
+                                    );
+                                    // Cerrar la conexión y la suscripción
+                                    _socketSubscription?.cancel();
+                                    _channel?.sink.close();
+                                    await actualizarEstadoConductor(
+                                      3,
+                                      "DESCONECTADO",
+                                    );
+
+                                    // Ejemplo: miServicioAPI.actualizarEstado('desconectado');
+                                  }
+                                  // Ejemplo: desconectar conductor con id 3
                                 },
                               ),
                             ],
